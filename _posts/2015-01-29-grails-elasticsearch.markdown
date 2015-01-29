@@ -7,10 +7,10 @@ categories: Grails Elasticsearch
 
 Elasticsearch is based on lucene which is a search engine and provides range of features, specially famous for its text based searching. Elasticsearch provides domain class mapping to indexes, and add methods to domain for searching. You also have an option to create, update or delete index as soon as there is a change in the domain.
 
-Elasticsearch is currently being used by github, soundcloud and many more: `http://www.elasticsearch.org/case-study/`
+Elasticsearch is currently being used by github, soundcloud and many more. More detail from <a href="http://www.elasticsearch.org/case-study/">here</a>.
 
-This is gives a summary of how cluster, nodes and shards are linked:
-`https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0wetPnhOhTtRanRjXcwrke4veL6MTwdLZDjsiRH5-TZpj63awow` 
+This gives a <a href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0wetPnhOhTtRanRjXcwrke4veL6MTwdLZDjsiRH5-TZpj63awow">summary</a> of how cluster, nodes and shards are linked:
+
 
 For a list of elasticsearch terminologies, see: 
 
@@ -78,8 +78,8 @@ def add(String title, String description) {
 {% endhighlight %}
 
 Either add events from bootstrap.groovy or call the action to add event(s):
-`http://localhost:8080/GrailsES/event/add?title=New%20Year%20Eve&description=Enjoy%20new%20year%20eve%20with%20friends%20at%20Beach%20Club`
-`http://localhost:8090/GrailsES/event/add?title=Valentine%27s%20Day&description=Enjoy%20Valetines%20day%20with%20your%20wife`
+<a href="http://localhost:8080/GrailsES/event/add?title=New%20Year%20Eve&description=Enjoy%20new%20year%20eve%20with%20friends%20at%20Beach%20Club">Event 1</a>
+<a href="http://localhost:8090/GrailsES/event/add?title=Valentine%27s%20Day&description=Enjoy%20Valetines%20day%20with%20your%20wife">Event 2</a>
 
 or from Bootstrap:
 {% highlight java %}
@@ -93,7 +93,7 @@ def init = { servletContext ->
 }
 {% endhighlight %}
 
-Lets write some searching. There are two ways to search, you can use searchable(indexed) Domain class or ElasticsearchService. Both provides search methods. There are multiple overloaded search methods, the easiest one to use is by clouser. More detail can be seen here: `http://noamt.github.io/elasticsearch-grails-plugin/guide/searching.html#queryStrings`. 
+Lets write some searching. There are two ways to search, you can use searchable(indexed) Domain class or ElasticsearchService. Both provides search methods. There are multiple overloaded search methods, the easiest one to use is by clouser. More detail can be seen here from <a href="http://noamt.github.io/elasticsearch-grails-plugin/guide/searching.html#queryStrings">plugin documentation</a>.  
 You can even use a QueryBuilder to construct query do the search.
 
 {% highlight java %}
@@ -103,14 +103,14 @@ To read index, along with many useful data, you can follow this, its a plugin th
 https://github.com/mobz/elasticsearch-head
 But if that sound bit too much todo, browse at: 
 `http://localhost:9200/<package>/<domain-name>/<index-id>`
-`https://github.com/mobz/elasticsearch-head`
+Details from <a href="https://github.com/mobz/elasticsearch-head">here</a>
 
 <h3>Helpful links:</h3>
-`http://www.elasticsearchtutorial.com/elasticsearch-in-5-minutes.html`
-`http://noamt.github.io/elasticsearch-grails-plugin/`
+<a href="http://www.elasticsearchtutorial.com/elasticsearch-in-5-minutes.html">5 Minutes with elasticsearch</a>
+<a href="http://noamt.github.io/elasticsearch-grails-plugin/">Grails plugin Documentation</a>
 
 <h3>Cons:</h3>
-You can get a working copy of this from [github]: https://github.com/sufyanshoaib/GrailsElasticsearch
+You can get a working copy of this from <a href="https://github.com/sufyanshoaib/GrailsElasticsearch">github</a>.
 
 <h3>Cons:</h3>
 <ul>
