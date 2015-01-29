@@ -117,3 +117,5 @@ You can get a working copy of this from <a href="https://github.com/sufyanshoaib
 <li>There isnt any option yet to get the words suggestions</li>
 <li>If you want to sort by some field and filter by distance and get to know the distance of each result, its not possible via the query, but you can iterate and calcualte distance against each result.</li>
 </ul>
+
+I will try to get it hosted somewhere and add more stuffs like Term highlighting etc
