@@ -1,5 +1,5 @@
 
-<script>
+<!-- <script>
   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
   (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
   m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
@@ -8,7 +8,8 @@
   ga('create', 'UA-58773492-1', 'auto');
   ga('send', 'pageview');
 
-</script>
+</script> -->
+
 <!-- 
 <footer class="site-footer">
 
@@ -64,6 +65,26 @@
 
   </div>
 -->
-<a href="/" class="pagelink" onclick="ga('send', 'event', 'Home Page', 'click', 'open');" >Home</a>
+
+<!-- onclick="ga('send', 'event', 'Home Page', 'click', 'open');"  -->
+<a href="/" class="pagelink tracked" >Home</a>
+<script>
+  $(function() {
+  $("a.tracked").click(function(e) {
+    if (!ga.q) {
+      var url = $(this).attr("href");
+      ga("send", "event", "outbound", "click", url, {"hitCallback":
+        function () {
+          document.location = url;
+        }
+      });
+      e.preventDefault();
+    }
+  });
+});
+
+
+  
+</script>
 </footer>
 
