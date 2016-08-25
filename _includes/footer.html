@@ -72,13 +72,18 @@
   $(function() {
   $("a.tracked").click(function(e) {
     if (!ga.q) {
+      console.log("ga found")
       var url = $(this).attr("href");
       ga("send", "event", "outbound", "click", url, {"hitCallback":
         function () {
+          console.log("sent")
           document.location = url;
         }
       });
       e.preventDefault();
+    } else {
+      
+      console.log("ga not available");
     }
   });
 });
