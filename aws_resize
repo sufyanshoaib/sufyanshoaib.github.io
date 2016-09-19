@@ -20,36 +20,15 @@ const postProcessResource = (resource, fn) => {
     return ret;
 };
 
-
-const identify = (event, callback) => {
-    if (!event.base64Image) {
-        const msg = 'Invalid identify request: no "base64Image" field supplied';
-        console.log(msg);
-        callback(msg);
-        return;
-    }
-    const tmpFile = `/tmp/inputFile.${(event.inputExtension || 'png')}`;
-    let buffer = new Buffer(event.base64Image, 'base64');
-    fs.writeFileSync(tmpFile, buffer);
-    const args = event.customArgs ? event.customArgs.concat([tmpFile]) : tmpFile;
-    im.identify(args, (err, output) => {
-        fs.unlinkSync(tmpFile);
-        if (err) {
-            console.log('Identify operation failed:', err);
-            callback(err);
-        } else {
-            console.log('Identify operation completed successfully');
-            callback(null, output);
-        }
-    });
-};
-
 const resize = (event, context, callback) => {
     console.log('event.Records[0]:' + JSON.stringify(event));
+    
+    
     if (event.Records[0].EventSource && event.Records[0].EventSource == 'aws:sns') {
-            console.log("event is from SNS." + event.Records[0].Sns.Message)
-            let eventO = event
-            event = JSON.parse(eventO.Records[0].Sns.Message);
+        //event triggered via SNS
+        console.log("event is from SNS." + event.Records[0].Sns.Message)
+        let eventO = event
+        event = JSON.parse(eventO.Records[0].Sns.Message);
     }
     
     let image_original = event.Records[0].s3.object.key;
@@ -63,7 +42,7 @@ const resize = (event, context, callback) => {
         Bucket: bucket,
         Key: key
     };
-    console.log(`params:` + params);
+    
     s3.getObject(params, (err, data) => {
         if (err) {
             console.log(err);
@@ -72,19 +51,28 @@ const resize = (event, context, callback) => {
             callback(message);
         } else {
             console.log('CONTENT TYPE:', data.ContentType);
-            event.base64Image = data.Body; //.toString('base64');
-            console.log('event.base64Image:', event.base64Image);
+            event.base64Image = data.Body; 
         }
     
     // If neither height nor width was provided, turn this into a thumbnailing request
     if (!event.height && !event.width) {
-        event.width = 707; //312;
+        event.width = 459; //707; //312;
     }
+    resizeAndUpload(event, image_original)
+
+    event.width = 707;
+    resizeAndUpload(event, image_original)
+
+};
+
+
+const resizeAndUpload = (event, image_original) => {
+
     const resizedFile = `/tmp/resized.${(event.outputExtension || 'jpg')}`;
     
     var newPath = image_original.substr(0, image_original.lastIndexOf("/") + 1);
     var origName = image_original.substr(image_original.lastIndexOf("/") + 1);
-    var newName = origName.substr(0, origName.lastIndexOf(".jpg")) + "_707.";
+    var newName = origName.substr(0, origName.lastIndexOf(".jpg")) + (event.width == 707 ? "_op." : "_" + event.width + ".");
     
     console.log("origName:" + origName + ", newName:" + newName);
     
@@ -106,9 +94,12 @@ const resize = (event, context, callback) => {
                 console.log('Resize operation completed successfully');
                 //let buffer = postProcessResource(resizedFile, (file) => new Buffer(fs.readFileSync(file)).toString('base64'));
                 let buffer = new Buffer(fs.readFileSync(resizedFile), 'base64');
-                 var param = {Bucket: bucket, Key: resizedFile2, Body: buffer, ContentEncoding: 'base64',
-    ContentType: 'image/jpeg'};
-                console.log("s3");
+                var param = { 
+                            Bucket: bucket, Key: resizedFile2, Body: buffer, 
+                            ContentEncoding: 'base64', ContentType: 'image/jpeg',
+                            ACL: 'public-read'    
+                            };
+                
                 s3.upload(param, function(err, data) {
                     if (err) console.log(err, err.stack); // an error occurred
                     else console.log(data);           // successful response
@@ -127,38 +118,6 @@ const resize = (event, context, callback) => {
     });
 };
 
-const convert = (event, callback) => {
-    event.customArgs = event.customArgs || [];
-    let inputFile = null;
-    let outputFile = null;
-    console.log("(event.base64Image:" + event.base64Image);
-    if (event.base64Image) {
-        inputFile = `/tmp/inputFile.${(event.inputExtension || 'png')}`;
-        let buffer = new Buffer(event.base64Image, 'base64');
-        fs.writeFileSync(inputFile, buffer);
-        event.customArgs.unshift(inputFile);
-    }
-    //if (event.outputExtension) {
-        outputFile = `/tmp/outputFile.jpg`;
-        event.customArgs.push(outputFile);
-    //}
-    im.convert(event.customArgs, (err, output) => {
-        if (err) {
-            console.log('Convert operation failed:', err);
-            callback(err);
-        } else {
-            console.log('Convert operation completed successfully');
-            postProcessResource(inputFile);
-            if (outputFile) {
-                callback(null, postProcessResource(outputFile, (file) => new Buffer(fs.readFileSync(file)).toString('base64')));
-            } else {
-                // Return the command line output as a debugging aid
-                callback(null, output);
-            }
-        }
-    });
-};
-
 
 exports.handler = (event, context, callback) => {
     event.operation = "resize";
@@ -172,22 +131,9 @@ exports.handler = (event, context, callback) => {
         case 'ping':
             callback(null, 'pong');
             break;
-        case 'getDimensions':
-            event.customArgs = ['-format', '%wx%h'];
-            /* falls through */
-        case 'identify':
-            identify(event, callback);
-            break;
         case 'thumbnail':  // Synonym for resize
         case 'resize':
             resize(event, context, callback);
-            break;
-        case 'getSample':
-            event.customArgs = ['rose:'];
-            event.outputExtension = event.outputExtension || 'png';
-            /* falls through */
-        case 'convert':
-            convert(event, callback);
             break;
         default:
             callback(new Error(`Unrecognized operation "${operation}"`));
