@@ -58,15 +58,16 @@ const resize = (event, context, callback) => {
     if (!event.height && !event.width) {
         event.width = 459; //707; //312;
     }
-    resizeAndUpload(event, image_original)
+    resizeAndUpload(event, image_original, bucket, callback, context);
 
     event.width = 707;
-    resizeAndUpload(event, image_original)
-
+    event.base64Image = data.Body;
+    resizeAndUpload(event, image_original, bucket, callback, context);
+});
 };
 
 
-const resizeAndUpload = (event, image_original) => {
+const resizeAndUpload = (event, image_original, bucket, callback, context) => {
 
     const resizedFile = `/tmp/resized.${(event.outputExtension || 'jpg')}`;
     
@@ -107,15 +108,19 @@ const resizeAndUpload = (event, image_original) => {
                     console.log('actually done!');
                     context.done();
                 });
-                callback(null, buffer);
+                if (callback) {
+                    callback(null, buffer);
+                }
             }
         });
     } catch (err) {
         console.log('Resize operation failed:', err);
-        callback(err);
+        if (callback) {
+            callback(err);
+        }
     }
     
-    });
+    
 };
 
 
