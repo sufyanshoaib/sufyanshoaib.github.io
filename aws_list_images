@@ -15,13 +15,10 @@ exports.handler = (event, context, callback) => {
     
     var params = {
       Bucket: 'cdn.cobone.com', /* required */
-      Prefix: 'deals/etisalat/whateverittakes/',
+      Prefix: 'deals/uae/littleexplorers/embedlittleexplorers6.jpg',
       MaxKeys: 1,
       FetchOwner: true,
-      EncodingType: 'url' //,
-      //Marker: 'STRING_VALUE',
-      //MaxKeys: 0,
-      //Prefix: ''
+      EncodingType: 'url'
     };
     
     var count = 0;
@@ -30,13 +27,18 @@ exports.handler = (event, context, callback) => {
         console.log("Inside listPagedObjects");
         s3.listObjectsV2(params, function(err, data) {
             console.log("Inside listObjectsV2");
-          if (err) {
-              console.log("error:")
-              console.log(err, err.stack); // an error occurred
-          } else  {
-              console.log(data);           // successful response
             
-            if (data.Contents[0].Size > 0 && data.Contents[0].Key.indexOf("_459.jpg") == -1) {
+          if (err) {
+            console.log("error:")
+            console.log(err, err.stack); // an error occurred
+          
+          } else  {
+            
+            console.log(data);           // successful response
+            
+            if (data.Contents[0].Size > 0 
+            && data.Contents[0].Key.indexOf("_op.jpg") == -1
+            && data.Contents[0].Key.indexOf("_459.jpg") == -1) {
                 console.log("found file:" + data.Contents[0].Key);
                 event.Records = [1]; 
                 event.Records[0] = {}
@@ -47,50 +49,35 @@ exports.handler = (event, context, callback) => {
                 event.Records[0].s3.bucket.name = params.Bucket;
                 event.default = 'I dont want to send any default value';
                   
-              /* // Notify listener with object to resize.
+               // Notify listener with object to resize.
               var paramsSNS = {
                   Message: JSON.stringify(event, null, 2), //  required 
-                 /// *  MessageAttributes: {
+                 /*  MessageAttributes: {
                     someKey: {
                       DataType: 'STRING_VALUE', /// required 
                       BinaryValue: new Buffer('...') || 'STRING_VALUE',
                       StringValue: 'STRING_VALUE'
                     },
                      anotherKey: ... 
-                  },// * /
+                  }, */
                   MessageStructure: 'JSON',
                   //PhoneNumber: 'STRING_VALUE',
                   Subject: 'TEST 2',
                   TopicArn: 'arn:aws:sns:eu-west-1:278678531216:ImageResizeTopic'
                 };
                 
+                
                 sns.publish(paramsSNS, function(err, data) {
                   if (err) console.log(err, err.stack); // an error occurred
                   else     console.log(data);           // successful response
                 });
-                */
                 
-
-              /* // Directly invokes Lambda function but causes job to end early as function call is not async.
-                lambda.invoke({
-                    FunctionName: 'testImageResize',
-                  //{ Key: 'deals/uae/1stautocar/1stautocar.jpg', LastModified: Sun Jan 19 2014 11:00:21 GMT+0000 (UTC), ETag: '"082b0a952ca2febcb7771bc2198c68ba"', Size: 78883, StorageClass: 'STANDARD', Owner: [Object] }
-                  
-                    Payload: JSON.stringify(event, null, 2) // pass params
-                }, function(error, data) {
-                  if (error) {
-                    context.done('error', error);
-                  }
-                  if(data.Payload){
-                    context.succeed(data.Payload)
-                  }
-                });
-                */
+                
             } else { 
                 console.log("probably a directory found, name index:" + data.Contents[0].Key.indexOf("_459.jpg"));
             }
                 
-            if (data.NextContinuationToken && count < 10) {
+            if (data.NextContinuationToken && count < 1) {
                 params.ContinuationToken = data.NextContinuationToken;
                 console.log("searching for next counter: " +count );
                 count = count + 1;
