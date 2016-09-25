@@ -4,22 +4,6 @@ let fs = require('fs');
 let aws = require('aws-sdk');
 let s3 = new aws.S3({ apiVersion: '2006-03-01' });
 
-
-const postProcessResource = (resource, fn) => {
-    let ret = null;
-    if (resource) {
-        if (fn) {
-            ret = fn(resource);
-        }
-        try {
-            fs.unlinkSync(resource);
-        } catch (err) {
-            // Ignore
-        }
-    }
-    return ret;
-};
-
 const resize = (event, context, callback) => {
     console.log('event.Records[0]:' + JSON.stringify(event));
     
@@ -58,16 +42,35 @@ const resize = (event, context, callback) => {
     if (!event.height && !event.width) {
         event.width = 459; //707; //312;
     }
+    
+    var keysMap = { 'deals/m1/123.jpg':1}
+    
+    let mapParam = { 
+        Bucket: bucket,
+        Key: 'deals/keysMap.txt'
+    }
+    s3.getObject(mapParam, (err, data) => { 
+        if (err) {
+            console.log('keysMap not found')
+            mapParam.Body = JSON.stringify(keysMap);
+            mapParam.ContentType = 'application/json';
+    
+            s3.upload(mapParam, function(err, data) { if (err) { console.log('error while uploading keysMap', err.stack)}  });
+        } else {
+            console.log('yeeeaa.... keysMap  found', JSON.parse(data.Body))
+            keysMap = JSON.parse(data.Body);
+        }
+    });
     resizeAndUpload(event, image_original, bucket, callback, context);
 
-    event.width = 707;
-    event.base64Image = data.Body;
-    resizeAndUpload(event, image_original, bucket, callback, context);
+    //event.width = 707;
+    //event.base64Image = data.Body;
+    //resizeAndUpload(event, image_original, bucket, callback, context);
 });
 };
 
 
-const resizeAndUpload = (event, image_original, bucket, callback, context) => {
+function resizeAndUpload (event, image_original, bucket, callback, context) {
 
     const resizedFile = `/tmp/resized.${(event.outputExtension || 'jpg')}`;
     
@@ -121,26 +124,10 @@ const resizeAndUpload = (event, image_original, bucket, callback, context) => {
     }
     
     
-};
+}
 
 
 exports.handler = (event, context, callback) => {
     event.operation = "resize";
-    const operation = event.operation;
-    delete event.operation;
-    if (operation) {
-        console.log(`Operation ${operation} 'requested`);
-    }
-
-    switch (operation) {
-        case 'ping':
-            callback(null, 'pong');
-            break;
-        case 'thumbnail':  // Synonym for resize
-        case 'resize':
-            resize(event, context, callback);
-            break;
-        default:
-            callback(new Error(`Unrecognized operation "${operation}"`));
-    }
+    resize(event, context, callback);
 };
