@@ -1,0 +1,22 @@
+{
+  "Records": [
+    {
+      "EventSource": "aws:sns",
+      "EventVersion": "1.0",
+      "EventSubscriptionArn": "arn:aws:sns:eu-west-1:278678531216:ImageResizeTopic:2d226578-159c-48f3-a245-301beda3b602",
+      "Sns": {
+        "Type": "Notification",
+        "MessageId": "30e4e883-67ff-51ef-a0c5-b8db048e4c48",
+        "TopicArn": "arn:aws:sns:eu-west-1:278678531216:ImageResizeTopic",
+        "Subject": "TEST 2",
+        "Message": "{\n  \"Records\": [\n    {\n      \"s3\": {\n        \"object\": {\n          \"key\": \"deals/uae/littleexplorers/embedlittleexplorers6.jpg\"\n        },\n        \"bucket\": {\n          \"name\": \"cdn.cobone.com\"\n        }\n      }\n    }\n  ],\n  \"default\": \"I dont want to send any default value\"\n}",
+        "Timestamp": "2016-09-18T09:41:05.669Z",
+        "SignatureVersion": "1",
+        "Signature": "{\n  \"default\" : \"MQFGgf7hYKy9J+AAZxIfHplZbCgfkUh3sjBreWAkS6kEIQqTfiABB3SpOgMzBJLjZg330gPMFulIbLH9lFDw5cujOIJoEjcsvz/YnJc9cSlY5oRIBqwNqcBxUVlfuZOZWRCCQCVPk3SmY1GFR/geDzcmG3bzx9xYhymdC5TNKQR66McTDV5ULRWxpso/QTzf/PQ/SaqAxubVO+nDjYwyZNG5GPKa+Jm0AYkNsTy1Lu+vddqs44vc2F03tD1L+ChbiKhZgrKcGf5b5xX261uepXgZhsykoMrx6Ly+huz/Y+ggrddpZa0FuFp+CmV8lrQp1Je6oy4wNwnNPI8dCUgBNg==\",\n  \"name\" : \"C53HGI/Xd1P09Ksnws51e4p4w9yjG3aaJPp1Jc2aldnbQkPBax4EjCUIvIw+iulby9oSU34AxA+f7D8IXC0bmjIT5lBfKp634I5oLWRuKm6nBAN7TLwqsBUqcq8FvaxOTUsO9Z14icDT8axT9ZRM7PLBnguHmUOTk+GnIlBOVA1GDVM2tZv31e+Iq3UHoM9jPMsugsFsBlY/v87xs2THmq/Mr3dfdHzbZH3Mx9Ch6bHMSydZOgm7Orw9Qr8/NyAmIDYzrijnXT8cZic7vCrw8JP1OudZvqGJ6XM46clma43p7di2AuYFMC99Iy/OeZovN1U2Vq+4RdJwvqnqknxJKg==\",\n  \"key\" : \"SWD3X4w1JGkFlrzAp1ke04fhlZ8FFPUSoXO3b1Q6v+LqKlfvDNYwqDdnBAQadwm4MQMAD8/2vyxpLVme+CA4aPStP4h+Df4O16NcIf9GEADPPOPuLGF5zh3AAlhfdVDBv8CHOlz/T6RKV7nf5vpXU2hj5tYubmXis1XLpW4PjKeRGnsQVm1CMsm1QUnGM7W+zVXqjAxiyCEU1sK0PZgtK837cAME7kl+t6524dhL+EPcYvC6qw3aVDtsDjkCFp+bHx1f2ghzGhuLtgeqnOvmAeY4GOYHcAshQZs7TstnKN/rIzDSWBu7UNR8N/u695RLhDM0uCfuRLrb16YUgbG7GA==\"\n}",
+        "SigningCertUrl": "https://sns.eu-west-1.amazonaws.com/SimpleNotificationService-b95095beb82e8f6a046b3aafc7f4149a.pem",
+        "UnsubscribeUrl": "https://sns.eu-west-1.amazonaws.com/?Action=Unsubscribe&SubscriptionArn=arn:aws:sns:eu-west-1:278678531216:ImageResizeTopic:2d226578-159c-48f3-a245-301beda3b602",
+        "MessageAttributes": {}
+      }
+    }
+  ]
+}
