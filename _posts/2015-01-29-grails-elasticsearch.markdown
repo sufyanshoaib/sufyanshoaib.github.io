@@ -16,32 +16,31 @@ For a list of elasticsearch terminologies, see <a href="https://www.elastic.co/g
 
 So, lets quickly create a grails project for Events searching:
 
-Note: Make sure you have latest version of grails, for more information checkout gvmtools.net and jdk is installed with 1.7 version (or above)
+Note: Make sure you have latest version of grails (for this example I used grails v3.19), for more information checkout gvmtools.net and jdk is installed with 1.7 version (or above)
 
->$> grails CreateApp GrailsES
+>$ grails create-app GrailsES --profile=rest-api
 
->$> cd GrailsES  
-
+>$ cd GrailsES  
 
 Create a domain, controller and service:
->$> grails CreateDomainClass com.sufyan.demo.Event
 
->$> grails CreateController com.sufyan.demo.Event
+>$ grails create-domain-resource com.sufyan.demo.Event
 
->$> grails CreateService com.sufyan.demo.Event
+>$ grails create-restful-controller com.sufyan.demo.Event
 
-Modify BuildConfig.groovy to add elasticsearch plugin dependency
+>$ grails create-service com.sufyan.demo.Event
+
+Add elasticsearch plugin by adding its dependency in build.gradle
 {% highlight xml %}
-plugins {
-	runtime ":elasticsearch:0.1.0" 
-}
+    compile "org.grails.plugins:elasticsearch:1.0.0"
 {% endhighlight %}
 
-And incase you want to integrate with intellij IDEA IDE,
->$>grails integrate-with --intellij
-
-Perform compile so that grails download any dependencies:
->$>grails compile
+or if you are using Grails v2.* or older, add dependency in  BuildConfig.groovy
+{% highlight xml %}
+plugins {
+	runtime ":elasticsearch:1.0.0" 
+}
+{% endhighlight %}
 
 Elasticsearch grails plugin, by default, perform auto indexing of domains which are annotated with `searchable` class property set to true as soon as the domain is save or update.
 
@@ -60,8 +59,13 @@ class Event {
 
 Here I have marked title and description properties to be `analyzed`, that is, the values stored in index will be tokenized, so if title has `Technology Expo Pakistan`, tokens will be `technology`, `expo`, `pakistan`. Boost has been given to give some priority to those fields in index while performing search.
 
-Update `Config.groovy` to define the datastore you are using in your project, this is because, elasticsearch hooks into GORM’s storage events
+Update `application.yml` to define datastore you are using in your system, thats because elasticsearch hooks into GORM’s storage events 
+{% highlight ruby %}
+elasticSearch:
+   datastoreImpl: hibernateDatastore
+{% endhighlight %}
 
+For older grails versions, update `Config.groovy`:
 {% highlight ruby %}
 elasticsearch {
    datastoreImpl = 'hibernateDatastore'
@@ -70,7 +74,7 @@ elasticsearch {
 
 Cool... so far
 
-Lets write an action handler to add events in your controller:
+Lets write an service to index events in EventService:
 {% highlight java %}
 def add(String title, String description) {
    Event event = new Event(title:title, description:description)
@@ -81,14 +85,8 @@ def add(String title, String description) {
 }
 {% endhighlight %}
 
-Add some events to index them; 
-via action handler:
-<a href="http://localhost:8080/GrailsES/event/add?title=New%20Year%20Eve&description=Enjoy%20new%20year%20eve%20with%20friends%20at%20Beach%20Club">Event 1</a>
-<a href="http://localhost:8090/GrailsES/event/add?title=Valentine%27s%20Day&description=Enjoy%20Valetines%20day%20with%20your%20wife">Event 2</a>
 
-or 
-
-via Bootstrap.groovy:
+Add some events to index via Bootstrap.groovy:
 {% highlight java %}
 def init = { servletContext ->
     eventService.addEvent("Expo Pakistan", "2 days expo of Pakistan, all stuffs...at expo center")
@@ -100,26 +98,62 @@ def init = { servletContext ->
 }
 {% endhighlight %}
 
+As we are using gradle build system, lets compile with gradle to download dependencies:
+
+>$ gradle classes
+
+More gradle task can be found <a href="http://docs.grails.org/latest/guide/commandLine.html#gradleTasks">here</a>.
+
+And now lets run the app to index some events:
+
+>$ gradle bootRun
+
 Lets write some searching code. There are two ways to search, you can use searchable(indexed) Domain class or `ElasticsearchService`. Both provides search methods. There are multiple overloaded search methods, the easiest one to use is by clouser. More detail can be found in <a href="http://noamt.github.io/elasticsearch-grails-plugin/guide/searching.html#queryStrings">plugin documentation</a>.  
 You can even use a QueryBuilder to construct query to do the search.
 
+Add an action to search index, update `EventController` with:
 {% highlight java %}
+    def search(String query) {
+        def events = elasticSearchService.search( [:],
+                {
+                    query_string(fields: ["title", "description"],
+                            query: query)
+                }, null as Closure)
+        render events as JSON
+    }
+{% endhighlight %}
+
+You have successfully written a search query over your events index, Congrats! This will perform a search on title and description fields that we indexed, and return the result as JSON.
+
+Lets perform search:
+
+>$ http://localhost:8080/event/searchWithDistance?query=ice
+
+Here is the response:
+{% highlight JSON %}
+{
+	"total": 1,
+	"searchResults": [
+		{
+			"id": 5,
+			"description": "All year open, indoor activities, bowling, snooker, ice skating",
+			"title": "Arena sports area"
+		}
+	]
+}
 {% endhighlight %}
 
 To read index, along with many useful data, you can follow this, its a plugin that connects with elasticsearch server: 
 https://github.com/mobz/elasticsearch-head
-But if that sound bit too much todo, browse at: 
-`http://localhost:9200/<package>/<domain-name>/<index-id>`
-Details from <a href="https://github.com/mobz/elasticsearch-head">here</a>
+
 
 <h3>Helpful links:</h3>
 <a href="http://www.elasticsearchtutorial.com/elasticsearch-in-5-minutes.html">5 Minutes with elasticsearch</a>
 <a href="http://noamt.github.io/elasticsearch-grails-plugin/">Grails plugin Documentation</a>
 
-<h3>Cons:</h3>
-You can get a working copy of this from <a href="https://github.com/sufyanshoaib/GrailsElasticsearch">github</a>.
+You can download the project from <a href="https://github.com/sufyanshoaib/GrailsElasticsearch">github</a>.
 
-<h3>Cons:</h3>
+<h3>Cons of using ElasticSearch Plugin:</h3>
 <ul>
 <li>There isnt any option yet to get the words suggestions</li>
 <li>If you want to sort by some field and filter by distance and get to know the distance of each result, its not possible via the query, but you can iterate and calcualte distance against each result.</li>
