@@ -12,19 +12,20 @@ Elasticsearch is currently being used by github, soundcloud and many more. More 
 This gives a <a href="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS0wetPnhOhTtRanRjXcwrke4veL6MTwdLZDjsiRH5-TZpj63awow">summary</a> of how cluster, nodes and shards are linked:
 
 
-For a list of elasticsearch terminologies, see: 
+For a list of elasticsearch terminologies, see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/glossary.html">this</a>.  
 
-So, lets quickly creating a grails project for Events searching:
+So, lets quickly create a grails project for Events searching:
 
 Note: Make sure you have latest version of grails, for more information checkout gvmtools.net and jdk is installed with 1.7 version (or above)
 
-`$>grails CreateApp GrailsES`
-`$>cd GrailsES`
+>``$> grails CreateApp GrailsES``  
+>``$> cd GrailsES``  
+
 
 Create a domain, controller and service:
-`$>grails CreateDomainClass com.sufyan.demo.Event`
-`$>grails CreateController com.sufyan.demo.Event`
-`$>grails CreateService com.sufyan.demo.Event`
+`$> grails CreateDomainClass com.sufyan.demo.Event`
+`$> grails CreateController com.sufyan.demo.Event`
+`$> grails CreateService com.sufyan.demo.Event`
 
 Modify BuildConfig.groovy to add elasticsearch plugin dependency
 {% highlight xml %}
