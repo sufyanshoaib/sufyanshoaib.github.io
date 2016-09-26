@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Elasticsearch with Grails"
-date:   2015-01-29 18:30:00
+date:   2016-09-26 11:00:00
 categories: Grails Elasticsearch
 ---
 
@@ -18,27 +18,30 @@ So, lets quickly create a grails project for Events searching:
 
 Note: Make sure you have latest version of grails, for more information checkout gvmtools.net and jdk is installed with 1.7 version (or above)
 
->``$> grails CreateApp GrailsES``  
->``$> cd GrailsES``  
+>$> grails CreateApp GrailsES
+
+>$> cd GrailsES  
 
 
 Create a domain, controller and service:
-`$> grails CreateDomainClass com.sufyan.demo.Event`
-`$> grails CreateController com.sufyan.demo.Event`
-`$> grails CreateService com.sufyan.demo.Event`
+>$> grails CreateDomainClass com.sufyan.demo.Event
+
+>$> grails CreateController com.sufyan.demo.Event
+
+>$> grails CreateService com.sufyan.demo.Event
 
 Modify BuildConfig.groovy to add elasticsearch plugin dependency
 {% highlight xml %}
 plugins {
-	runtime ":elasticsearch:0.0.3.8" 
+	runtime ":elasticsearch:0.1.0" 
 }
 {% endhighlight %}
 
 And incase you want to integrate with intellij IDEA IDE,
-`$>grails integrate-with --intellij`
+>$>grails integrate-with --intellij
 
 Perform compile so that grails download any dependencies:
-`$>grails compile`
+>$>grails compile
 
 Elasticsearch grails plugin, by default, perform auto indexing of domains which are annotated with `searchable` class property set to true as soon as the domain is save or update.
 
@@ -55,7 +58,7 @@ class Event {
 }
 {% endhighlight %}
 
-Here I have marked title and description properties to be `analyzed` that is the values stored in index will be tokenized, so if title has `Technology Expo Pakistan`, tokens will be technology, expo, pakistan. Boost has been given to give some priority to those fields in index while performing search.
+Here I have marked title and description properties to be `analyzed`, that is, the values stored in index will be tokenized, so if title has `Technology Expo Pakistan`, tokens will be `technology`, `expo`, `pakistan`. Boost has been given to give some priority to those fields in index while performing search.
 
 Update `Config.groovy` to define the datastore you are using in your project, this is because, elasticsearch hooks into GORM’s storage events
 
@@ -67,7 +70,7 @@ elasticsearch {
 
 Cool... so far
 
-Lets write a method to add events:
+Lets write an action handler to add events in your controller:
 {% highlight java %}
 def add(String title, String description) {
    Event event = new Event(title:title, description:description)
@@ -78,11 +81,14 @@ def add(String title, String description) {
 }
 {% endhighlight %}
 
-Either add events from bootstrap.groovy or call the action to add event(s):
+Add some events to index them; 
+via action handler:
 <a href="http://localhost:8080/GrailsES/event/add?title=New%20Year%20Eve&description=Enjoy%20new%20year%20eve%20with%20friends%20at%20Beach%20Club">Event 1</a>
 <a href="http://localhost:8090/GrailsES/event/add?title=Valentine%27s%20Day&description=Enjoy%20Valetines%20day%20with%20your%20wife">Event 2</a>
 
-or from Bootstrap:
+or 
+
+via Bootstrap.groovy:
 {% highlight java %}
 def init = { servletContext ->
     eventService.addEvent("Expo Pakistan", "2 days expo of Pakistan, all stuffs...at expo center")
@@ -94,8 +100,8 @@ def init = { servletContext ->
 }
 {% endhighlight %}
 
-Lets write some searching. There are two ways to search, you can use searchable(indexed) Domain class or ElasticsearchService. Both provides search methods. There are multiple overloaded search methods, the easiest one to use is by clouser. More detail can be seen here from <a href="http://noamt.github.io/elasticsearch-grails-plugin/guide/searching.html#queryStrings">plugin documentation</a>.  
-You can even use a QueryBuilder to construct query do the search.
+Lets write some searching code. There are two ways to search, you can use searchable(indexed) Domain class or `ElasticsearchService`. Both provides search methods. There are multiple overloaded search methods, the easiest one to use is by clouser. More detail can be found in <a href="http://noamt.github.io/elasticsearch-grails-plugin/guide/searching.html#queryStrings">plugin documentation</a>.  
+You can even use a QueryBuilder to construct query to do the search.
 
 {% highlight java %}
 {% endhighlight %}
