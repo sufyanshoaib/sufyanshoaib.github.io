@@ -14,8 +14,8 @@ var lambda = new aws.Lambda({
 exports.handler = (event, context, callback) => {
     
     var params = {
-      Bucket: 'cdn.cobone.com', /* required */
-      Prefix: 'deals/uae/littleexplorers/embedlittleexplorers6.jpg',
+      Bucket: 'sufyan-testing', /* required */
+      Prefix: 'deals/m1/f1/',
       MaxKeys: 1,
       FetchOwner: true,
       EncodingType: 'url'
@@ -77,7 +77,7 @@ exports.handler = (event, context, callback) => {
                 console.log("probably a directory found, name index:" + data.Contents[0].Key.indexOf("_459.jpg"));
             }
                 
-            if (data.NextContinuationToken && count < 1) {
+            if (data.NextContinuationToken && count < 10) {
                 params.ContinuationToken = data.NextContinuationToken;
                 console.log("searching for next counter: " +count );
                 count = count + 1;
