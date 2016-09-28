@@ -6,8 +6,7 @@ let s3 = new aws.S3({ apiVersion: '2006-03-01' });
 
 const resize = (event, context, callback) => {
     console.log('event.Records[0]:' + JSON.stringify(event));
-    
-    
+
     if (event.Records[0].EventSource && event.Records[0].EventSource == 'aws:sns') {
         //event triggered via SNS
         console.log("event is from SNS." + event.Records[0].Sns.Message)
@@ -22,29 +21,11 @@ const resize = (event, context, callback) => {
     // Get the object from the event and show its content type
     const bucket = event.Records[0].s3.bucket.name;
     const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
-    let params = {
-        Bucket: bucket,
-        Key: key
-    };
+    var imageSizes = [459, 707]
+    var imageNames = ['459', 'op']
     
-    s3.getObject(params, (err, data) => {
-        if (err) {
-            console.log(err);
-            const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
-            console.log(message);
-            callback(message);
-        } else {
-            console.log('CONTENT TYPE:', data.ContentType);
-            event.base64Image = data.Body; 
-        }
-    
-    // If neither height nor width was provided, turn this into a thumbnailing request
-    if (!event.height && !event.width) {
-        event.width = 459; //707; //312;
-    }
-    
-    var keysMap = { 'deals/m1/123.jpg':1}
-    
+    var keysMap = { }
+        
     let mapParam = { 
         Bucket: bucket,
         Key: 'deals/keysMap.txt'
@@ -55,37 +36,82 @@ const resize = (event, context, callback) => {
             mapParam.Body = JSON.stringify(keysMap);
             mapParam.ContentType = 'application/json';
     
-            s3.upload(mapParam, function(err, data) { if (err) { console.log('error while uploading keysMap', err.stack)}  });
+            s3.upload(mapParam, function(err, data) { 
+                if (err) { console.log('error while uploading keysMap', err.stack) }  
+            });
         } else {
             console.log('yeeeaa.... keysMap  found', JSON.parse(data.Body))
             keysMap = JSON.parse(data.Body);
         }
+        
+        if (!keysMap.hasOwnProperty(key)) {
+            getImage()
+        } else {
+            console.log(" Image already processed:" + key)
+        }
     });
-    resizeAndUpload(event, image_original, bucket, callback, context);
+    
+    function getImage() {
+        console.log("Inside getImage")
+        let params = {
+            Bucket: bucket,
+            Key: key
+        };
+        
+        s3.getObject(params, (err, data) => {
+            if (err) {
+                console.log(err);
+                const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+                console.log(message);
+                callback(message);
+            } else {
+                console.log('CONTENT TYPE:', data.ContentType);
+                event.base64Image = data.Body; 
+            }
+        
+            // If neither height nor width was provided, turn this into a thumbnailing request
+            ///if (!event.height && !event.width) {
+            //    event.width = 707; //707; //312;
+            //}
+            
+            for (var ind in imageSizes ) {
+                var imageSize = imageSizes[ind];
+                resizeAndUpload(keysMap, data.Body, imageSize, key, bucket, callback, context);
+            }
+                
+            
+        });
+    }
 
-    //event.width = 707;
-    //event.base64Image = data.Body;
-    //resizeAndUpload(event, image_original, bucket, callback, context);
-});
+    keysMap[key] = true;
+    mapParam.Body = JSON.stringify(keysMap);
+    mapParam.ContentType = 'application/json';
+    s3.upload(mapParam, function(err, data) { 
+        if (err) { console.log('error while uploading keysMap', err.stack) } 
+        else { console.log("keys uploaded")  }  
+    });
+    
 };
 
 
-function resizeAndUpload (event, image_original, bucket, callback, context) {
-
-    const resizedFile = `/tmp/resized.${(event.outputExtension || 'jpg')}`;
+function resizeAndUpload (keysMap, base64Image, resizeWidth, image_original, bucket, callback, context) {
+    var event = {};
+    event.base64Image = base64Image;
+    event.width = resizeWidth;
     
+     
     var newPath = image_original.substr(0, image_original.lastIndexOf("/") + 1);
     var origName = image_original.substr(image_original.lastIndexOf("/") + 1);
     var newName = origName.substr(0, origName.lastIndexOf(".jpg")) + (event.width == 707 ? "_op." : "_" + event.width + ".");
     
     console.log("origName:" + origName + ", newName:" + newName);
-    
-    const resizedFile2 = newPath + newName + `${(event.outputExtension || 'jpg')}`;
-    console.log("resizedFile2: " + resizedFile2);
+    const resizedFile = `/tmp/resized_${origName}_${resizeWidth}.jpg`;
+   
+    const newFileKey = newPath + newName + `${(event.outputExtension || 'jpg')}`;
+    console.log("newFileKey: " + newFileKey);
     
     let buffer = new Buffer(event.base64Image, 'base64');
-    delete event.base64Image;
-    delete event.outputExtension;
+
     event.srcData = buffer;
     event.dstPath = resizedFile;
     event.quality = 0.90;
@@ -99,7 +125,7 @@ function resizeAndUpload (event, image_original, bucket, callback, context) {
                 //let buffer = postProcessResource(resizedFile, (file) => new Buffer(fs.readFileSync(file)).toString('base64'));
                 let buffer = new Buffer(fs.readFileSync(resizedFile), 'base64');
                 var param = { 
-                            Bucket: bucket, Key: resizedFile2, Body: buffer, 
+                            Bucket: bucket, Key: newFileKey, Body: buffer, 
                             ContentEncoding: 'base64', ContentType: 'image/jpeg',
                             ACL: 'public-read'    
                             };
@@ -111,6 +137,7 @@ function resizeAndUpload (event, image_original, bucket, callback, context) {
                     console.log('actually done!');
                     context.done();
                 });
+                
                 if (callback) {
                     callback(null, buffer);
                 }
