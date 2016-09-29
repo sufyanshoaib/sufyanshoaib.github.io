@@ -14,6 +14,17 @@ const resize = (event, context, callback) => {
         event = JSON.parse(eventO.Records[0].Sns.Message);
     }
     
+    //Image has _op, _459 or isnt jpg then exit
+    if (key.indexOf("_op.jpg") != -1
+        || key.indexOf("_459.jpg") != -1
+        || key.indexOf(".jpg") == -1) {
+        console.log("Resized image triggered, exiting now...");
+        context.done();   
+        callback(null, "end")
+        return;
+    }
+    
+    
     let image_original = event.Records[0].s3.object.key;
     console.log(`image_original:` + image_original);
     let base64Image;
