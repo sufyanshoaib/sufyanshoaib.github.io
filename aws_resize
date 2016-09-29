@@ -55,11 +55,11 @@ const resize = (event, context, callback) => {
             keysMap = JSON.parse(data.Body);
         }
         
-        if (!keysMap.hasOwnProperty(key)) {
+        //if (!keysMap.hasOwnProperty(key)) {
             getImage()
-        } else {
-            console.log(" Image already processed:" + key)
-        }
+        //} else {
+        //    console.log(" Image already processed:" + key)
+        //}
     });
     
     function getImage() {
@@ -125,8 +125,8 @@ function resizeAndUpload (keysMap, base64Image, resizeWidth, image_original, buc
 
     event.srcData = buffer;
     event.dstPath = resizedFile;
-    event.quality = 0.90;
-    event.sharpening = 0.0;
+    event.quality = 0.80;
+    event.sharpening = 0.2;
     try {
         im.resize(event, (err, stdout, stderr) => {
             if (err) {
