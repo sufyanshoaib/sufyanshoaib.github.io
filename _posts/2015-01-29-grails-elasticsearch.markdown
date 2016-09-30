@@ -151,7 +151,7 @@ https://github.com/mobz/elasticsearch-head
 <a href="http://www.elasticsearchtutorial.com/elasticsearch-in-5-minutes.html">5 Minutes with elasticsearch</a>
 <a href="http://noamt.github.io/elasticsearch-grails-plugin/">Grails plugin Documentation</a>
 
-You can download the project from <a href="https://github.com/sufyanshoaib/GrailsElasticsearch">github</a>.
+You can download the project from <a href="https://github.com/sufyanshoaib/GrailsES">github</a>.
 
 <h3>Cons of using ElasticSearch Plugin:</h3>
 <ul>
