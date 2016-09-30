@@ -66,7 +66,7 @@ elasticSearch:
 {% endhighlight %}
 
 For older grails versions, update `Config.groovy`:
-{% highlight ruby %}
+{% highlight java %}
 elasticsearch {
    datastoreImpl = 'hibernateDatastore'
 }
