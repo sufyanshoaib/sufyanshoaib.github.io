@@ -32,8 +32,8 @@ const resize = (event, context, callback) => {
         return;
     }
     
-    var imageSizes = [459, 707]
-    var imageNames = ['459', 'op']
+    var imageSizes = [459]; // , 707]
+    var imageNames = ['459']; //, 'op']
     
     var keysMap = { }
         
@@ -76,6 +76,7 @@ const resize = (event, context, callback) => {
                 console.log(message);
                 callback(message);
             } else {
+                console.log(data);
                 console.log('CONTENT TYPE:', data.ContentType);
                 event.base64Image = data.Body; 
             }
