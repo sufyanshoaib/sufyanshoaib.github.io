@@ -1,7 +1,8 @@
 'use strict';
 let aws = require('aws-sdk');
 let s3 = new aws.S3({ apiVersion: '2006-03-01' });
-var sns = new aws.SNS({apiVersion: '2010-03-31'});
+let im = require('imagemagick');
+let fs = require('fs');
 
 console.log('Loading function');
 
@@ -9,87 +10,234 @@ var lambda = new aws.Lambda({
   region: 'eu-west-1' //change to your region
 });
 
+    var keysMap = { };
 
 
 exports.handler = (event, context, callback) => {
     
     var params = {
-      Bucket: 'sufyan-testing', /* required */
-      Prefix: 'deals/m1/f1/',
-      MaxKeys: 1,
+      Bucket: 'cdn.cobone.com', /* required */
+      Prefix: 'deals/uae/',
+      MaxKeys: 1000,
       FetchOwner: true,
       EncodingType: 'url'
     };
     
     var count = 0;
-    
+
     function listPagedObjects(params) {
-        console.log("Inside listPagedObjects");
-        s3.listObjectsV2(params, function(err, data) {
-            console.log("Inside listObjectsV2");
-            
-          if (err) {
-            console.log("error:")
-            console.log(err, err.stack); // an error occurred
-          
-          } else  {
-            
-            console.log(data);           // successful response
-            
-            if (data.Contents[0].Size > 0 
-            && data.Contents[0].Key.indexOf("_op.jpg") == -1
-            && data.Contents[0].Key.indexOf("_459.jpg") == -1) {
-                console.log("found file:" + data.Contents[0].Key);
-                event.Records = [1]; 
-                event.Records[0] = {}
-                event.Records[0].s3 = {}
-                event.Records[0].s3.object = {}
-                event.Records[0].s3.object.key = data.Contents[0].Key;
-                event.Records[0].s3.bucket = {}
-                event.Records[0].s3.bucket.name = params.Bucket;
-                event.default = 'I dont want to send any default value';
-                  
-               // Notify listener with object to resize.
-              var paramsSNS = {
-                  Message: JSON.stringify(event, null, 2), //  required 
-                 /*  MessageAttributes: {
-                    someKey: {
-                      DataType: 'STRING_VALUE', /// required 
-                      BinaryValue: new Buffer('...') || 'STRING_VALUE',
-                      StringValue: 'STRING_VALUE'
-                    },
-                     anotherKey: ... 
-                  }, */
-                  MessageStructure: 'JSON',
-                  //PhoneNumber: 'STRING_VALUE',
-                  Subject: 'TEST 2',
-                  TopicArn: 'arn:aws:sns:eu-west-1:278678531216:ImageResizeTopic'
-                };
-                
-                
-                sns.publish(paramsSNS, function(err, data) {
-                  if (err) console.log(err, err.stack); // an error occurred
-                  else     console.log(data);           // successful response
+        //console.log("Inside listPagedObjects");
+        
+        
+        let mapParam = { 
+            Bucket: 'sufyan-testing',
+            Key: 'deals/keysMap.json'
+        };
+        s3.getObject(mapParam, (err, data) => { 
+            if (err) {
+                console.log('keysMap not found');
+                mapParam.Body = JSON.stringify(keysMap);
+                mapParam.ContentType = 'application/json';
+        
+                s3.upload(mapParam, function(err, data) { 
+                    if (err) { console.log('error while uploading keysMap', err.stack) }  
                 });
-                
-                
-            } else { 
-                console.log("probably a directory found, name index:" + data.Contents[0].Key.indexOf("_459.jpg"));
-            }
-                
-            if (data.NextContinuationToken && count < 10) {
-                params.ContinuationToken = data.NextContinuationToken;
-                console.log("searching for next counter: " +count );
-                count = count + 1;
-                listPagedObjects(params);
             } else {
-                console.log("completed...");
+                console.log('yeeeaa.... keysMap  found', JSON.parse(data.Body));
+                keysMap = JSON.parse(data.Body);
             }
-        }
-          
+        
+            if (keysMap['lastKey']) {
+                console.log("lastKey found: " + keysMap['lastKey']);
+                params.StartAfter = keysMap['lastKey'];
+            }
+            
+            s3.listObjectsV2(params, function(err, data) {
+                //console.log("In Iteration,  listObjectsV2");
+                
+                if (err) {
+                    console.log("error:")
+                    console.log(err, err.stack); // an error occurred
+                  
+                } else  {
+                    
+                    //console.log(data);           // successful response
+                    for(var idx in data.Contents) {
+                        
+                        if (data.Contents[idx].Size > 0 
+                        && data.Contents[idx].Key.indexOf("_op.jpg") == -1
+                        && data.Contents[idx].Key.indexOf("_459.jpg") == -1
+                        && data.Contents[idx].Key.indexOf(".jpg") > 0) {
+                            console.log("found file:" + data.Contents[idx].Key);
+                            var imgEvent = { }
+                            imgEvent.Records = [1]; 
+                            imgEvent.Records[0] = {}
+                            imgEvent.Records[0].s3 = {}
+                            imgEvent.Records[0].s3.object = {}
+                            imgEvent.Records[0].s3.object.key = data.Contents[idx].Key;
+                            imgEvent.Records[0].s3.bucket = {}
+                            imgEvent.Records[0].s3.bucket.name = params.Bucket;
+                            imgEvent.default = 'I dont want to send any default value';
+                            
+                            if (!keysMap.hasOwnProperty(data.Contents[idx].Key)) {
+                                resizeImage(imgEvent);
+                                keysMap[data.Contents[idx].Key] = true;
+                                keysMap['lastKey'] = data.Contents[idx].Key;
+                                //console.log("lastKey set to " + keysMap['lastKey']);
+                            } else {
+                                //console.log(" Image already processed:" + data.Contents[idx].Key)
+                            }
+                            
+                        }  else {
+                            keysMap['lastKey'] = data.Contents[idx].Key;
+                            //console.log("probably a directory found, name index:" + data.Contents[idx].Key);
+                        }
+                    }
+                    /*
+                    if (data.NextContinuationToken && count < 1) {
+                        params.ContinuationToken = data.NextContinuationToken;
+                        console.log("else . searching for next counter: " +count );
+                        count = count + 1;
+                        listPagedObjects(params);
+                        console.log("else. after listPagedObject call")
+                    } else {
+                        console.log("else. completed...");
+                        context.done(null, 'Function Finished!');
+                    }
+                    */
+                }
+                
+                //context.done(null, 'Function Finished!');
+                console.log("keysMap:" + JSON.stringify(keysMap));
+                mapParam.Body = JSON.stringify(keysMap);
+                mapParam.ContentType = 'application/json';
+                console.log("uploading keysMap now.."+ mapParam)
+                s3.upload(mapParam, function(err, data) { 
+                    if (err) { console.log('error while uploading keysMap', err.stack) } 
+                    else { console.log("keysMap uploaded")  }  
+                });
+            
+            });
+            console.log("exiting now..")
+            
+
+                                
         });
-        console.log("exiting now..")
     }
     
     listPagedObjects(params);
 };
+
+
+
+function resizeImage(event) {
+    //console.log('event.Records[0]:' + JSON.stringify(event));
+
+    let image_original = event.Records[0].s3.object.key;
+    //console.log(`image_original:` + image_original);
+    let base64Image;
+    
+    // Get the object from the event and show its content type
+    const bucket = event.Records[0].s3.bucket.name;
+    const key = decodeURIComponent(event.Records[0].s3.object.key.replace(/\+/g, ' '));
+    var imageSizes = [459];
+    var imageNames = ['459'];
+
+    //console.log("Inside getImage")
+    let params = {
+        Bucket: bucket,
+        Key: key
+    };
+    
+    s3.getObject(params, (err, data) => {
+        if (err) {
+            console.log(err);
+            const message = `Error getting object ${key} from bucket ${bucket}. Make sure they exist and your bucket is in the same region as this function.`;
+            console.log(message);
+        } else {
+            //console.log('CONTENT TYPE:', data.ContentType);
+            event.base64Image = data.Body; 
+        }
+    
+        // If neither height nor width was provided, turn this into a thumbnailing request
+        ///if (!event.height && !event.width) {
+        //    event.width = 707; //707; //312;
+        //}
+        
+        for (var ind in imageSizes ) {
+            var imageSize = imageSizes[ind];
+            resizeAndUpload(keysMap, data.Body, imageSize, key, bucket);
+        }
+            
+        
+    });
+    
+}
+
+
+function resizeAndUpload (keysMap, base64Image, resizeWidth, image_original, bucket) {
+    var event = {};
+    event.base64Image = base64Image;
+    event.width = resizeWidth;
+    
+     
+    var newPath = image_original.substr(0, image_original.lastIndexOf("/") + 1);
+    var origName = image_original.substr(image_original.lastIndexOf("/") + 1);
+    var newName = origName.substr(0, origName.lastIndexOf(".jpg")) + (event.width == 707 ? "_op." : "_" + event.width + ".");
+    
+    console.log("origName:" + origName + ", newName:" + newName);
+    const resizedFile = `/tmp/resized_${origName}_${resizeWidth}.jpg`;
+   
+    const newFileKey = newPath + newName + `${(event.outputExtension || 'jpg')}`;
+    //console.log("newFileKey: " + newFileKey);
+    
+    let buffer = new Buffer(event.base64Image, 'base64');
+    event.data = buffer;
+    event.srcData = buffer;
+    event.dstPath = resizedFile;
+    event.quality = 0.80;
+    event.sharpening = 0.2; //default 0.2
+    try {
+        im.identify(event, function(err, features) {
+            console.log("inside identify:")
+            if (err)  {
+                console.log("error while identifying image:" + event, err)
+                throw err;
+            }
+            if (features.width > 459) { 
+                im.resize(event, (err, stdout, stderr) => {
+                    console.log("inside resize function")
+                    if (err) {
+                        console.log("error while resizing image:" + event, err)
+                        throw err;
+                    } else {
+                        console.log('Resize operation completed successfully' + newFileKey);
+                        let buffer = new Buffer(fs.readFileSync(resizedFile), 'base64');
+                        var param = { 
+                                        Bucket: bucket, Key: newFileKey, Body: buffer, 
+                                        ContentEncoding: 'base64', ContentType: 'image/jpeg',
+                                        ACL: 'public-read'    
+                                    };
+                        
+                        s3.upload(param, function(err, data) {
+                           // console.log("inside upload:" + event)
+                            if (err) console.log(err, err.stack); // an error occurred
+                            else console.log(data);           // successful response
+                    
+                            //console.log('actually done!');
+                        });
+                        
+                        
+                    }
+                });
+            } else {
+                console.log("Image:" + image_original + ", is small " + features.width + ", " + features.height);
+            }
+        });
+    } catch (err) {
+        console.log('Resize operation failed:', err);
+        
+    }
+    
+    
+}
