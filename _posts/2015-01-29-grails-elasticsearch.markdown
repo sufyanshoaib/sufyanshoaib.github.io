@@ -24,9 +24,9 @@ Note: Make sure you have latest version of grails (for this example I used grail
 
 Create a domain, controller and service:
 
->$ grails create-domain-resource com.sufyan.demo.Event
+>$ grails create-domain-class com.sufyan.demo.Event
 
->$ grails create-restful-controller com.sufyan.demo.Event
+>$ grails create-controller com.sufyan.demo.Event
 
 >$ grails create-service com.sufyan.demo.Event
 
